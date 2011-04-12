@@ -18,7 +18,10 @@ module CouchRest
           Rails.application.class.to_s.underscore.gsub(/\/.*/, '')
       end
     end
+
+    # Lucene rake tasks
+    rake_tasks do
+      load 'couchrest/model/tasks/lucene.rake'
+    end
   end
-
 end
-
