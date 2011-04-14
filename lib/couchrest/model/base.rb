@@ -19,6 +19,7 @@ module CouchRest
       include Designs
       include CastedBy
       include Dirty
+      include Search
       
 
       def self.subclasses
