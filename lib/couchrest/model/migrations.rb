@@ -50,9 +50,10 @@ module CouchRest
           puts "   created (#{document['version']})"
 
         elsif should_upgrade current, document
+          old_version = current['version']
           current.update(document)
           current.save
-          puts "   upgraded (#{current['version']} -> #{document['version']})"
+          puts "   upgraded (#{old_version} -> #{document['version']})"
 
         else
           puts "   up to date (#{current['version']})"
