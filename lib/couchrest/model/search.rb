@@ -16,6 +16,14 @@ module CouchRest
 
           ret['rows'].map! {|row| new row['doc'] }
         end
+
+        def skip_from_index
+          before_save do |document|
+            document['skip_from_index'] = true
+          end
+        end
+
+
       end
 
     end
