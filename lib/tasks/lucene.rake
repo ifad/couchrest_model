@@ -2,8 +2,8 @@ namespace :db do
   namespace :couch do
 
     desc "Load views in db/couch/* into the configured couchdb instance"
-    task :migrate do
-      Dir['db/couch/**/*.js'].each do |file|
+    task :migrate => :environment do
+      Dir["db/couch/**/*.js"].each do |file|
         source = File.read(file).
           gsub(/\n\s*/, '').      # Our JS multiline string implementation :-p
           gsub(/\/\*.*?\*\//, '') # And strip multiline comments as well.
