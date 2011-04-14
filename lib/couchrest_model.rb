@@ -47,6 +47,7 @@ require "couchrest/model/configuration"
 require "couchrest/model/connection"
 require "couchrest/model/designs"
 require "couchrest/model/designs/view"
+require "couchrest/model/search"
 
 # Monkey patches applied to couchrest
 require "couchrest/model/support/couchrest_design"

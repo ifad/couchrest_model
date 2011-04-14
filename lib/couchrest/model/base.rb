@@ -22,6 +22,7 @@ module CouchRest
       include CouchRest::Model::CastedBy
       include CouchRest::Model::Dirty
       include CouchRest::Model::Callbacks
+      include CouchRest::Model::Search
 
       def self.subclasses
         @subclasses ||= []
