@@ -2,7 +2,7 @@ require 'rails/generators/couchrest_model'
 
 module CouchrestModel
   module Generators
-    class ModelGenerator < Base
+    class ModelGenerator < NamedBase
       check_class_collision
 
       def create_model_file
