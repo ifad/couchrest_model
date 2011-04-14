@@ -14,15 +14,31 @@ namespace :db do
         document['_id']      ||= "_design/#{File.basename(file, '.js')}"
         document['language'] ||= 'javascript'
 
+        puts "== #{document.id}"
+
+        if document['version'].blank?
+          puts "   WARNING: no version specified"
+          document['version'] = Date.today.strftime('%Y%m%d01').to_i
+        end
+
         current = document.database.get(document.id) rescue nil
+
         if current.nil?
-          puts "Creating #{document.id}"
+          puts "   created (#{document['version']})"
           document.save
         else
-          puts "Upgrading #{document.id} #{document.rev}"
-          current.update(document)
-          current.save
+
+          if current['version'].blank? || current['version'] < document['version']
+            puts "   upgraded (#{current['version']} -> #{document['version']})"
+
+            current.update(document)
+            current.save
+          else
+            puts "   up to date (#{current['version']})"
+          end
         end
+
+        puts
       end
     end
 
