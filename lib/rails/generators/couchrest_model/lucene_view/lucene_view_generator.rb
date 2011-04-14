@@ -7,6 +7,7 @@ module CouchrestModel
 
       def create_lucene_view
         template 'lucene.js', 'db/couch/_design/lucene.js'
+        puts "\n   Don't forget to run rake db:couchdb:migrate to push the view to CouchDB\n\n"
       end
     end
   end
