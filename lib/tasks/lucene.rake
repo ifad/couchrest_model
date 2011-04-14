@@ -16,8 +16,10 @@ namespace :db do
 
         current = document.database.get(document.id) rescue nil
         if current.nil?
+          puts "Creating #{document.id}"
           document.save
         else
+          puts "Upgrading #{document.id} #{document.rev}"
           current.update(document)
           current.save
         end
