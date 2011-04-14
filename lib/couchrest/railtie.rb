@@ -21,7 +21,7 @@ module CouchRest
 
     # Lucene rake tasks
     rake_tasks do
-      load 'couchrest/model/tasks/lucene.rake'
+      load 'couchrest/model/tasks/migrate.rake'
     end
   end
 end
