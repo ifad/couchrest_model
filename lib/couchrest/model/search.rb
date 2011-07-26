@@ -14,7 +14,7 @@ module CouchRest
               :include_docs => true
           ))
 
-          ret['rows'].map! {|row| new row['doc'] }
+          ret['rows'].map! {|row| new row['doc'], :directly_set_attributes => true }
         end
 
         def skip_from_index
