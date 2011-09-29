@@ -8,9 +8,12 @@ module CouchRest
         def search(query, options = {})
           index = options.delete(:index) || 'search'
 
+          query = query.blank? ? nil : "(#{query})"
+          klass = "couchrest_type:#{self.name}"
+
           ret = database.search(
             "_design/lucene/#{index}", options.update(
-              :q            => "couchrest_type:#{self.name} AND (#{query})",
+              :q            => [klass, query].compact.join(' AND '),
               :include_docs => true
           ))
 
