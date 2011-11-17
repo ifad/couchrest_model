@@ -51,7 +51,7 @@ module CouchRest
 
         elsif should_upgrade current, document
           old_version = current['version']
-          current.update(document)
+          current.merge!(document)
           current.save
           puts "   upgraded (#{old_version} -> #{document['version']})"
 
