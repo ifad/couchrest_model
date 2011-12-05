@@ -9,7 +9,7 @@ module CouchRest
           index = options.delete(:index) || 'search'
 
           query = query.blank? ? nil : "(#{query})"
-          klass = "#{self.model_type_key}:#{self.name}"
+          klass = "#{self.model_type_key}:\"#{self.name}\""
 
           ret = database.search(
             "_design/lucene/#{index}", options.update(
