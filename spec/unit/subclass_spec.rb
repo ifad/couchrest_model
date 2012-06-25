@@ -17,13 +17,17 @@ end
 
 class OnlineCourse < Course
   property :url
-  view_by :url
+  design do
+    view :by_url
+  end
 end
 
 class Animal < CouchRest::Model::Base
   use_database TEST_SERVER.default_database
   property :name
-  view_by :name
+  design do
+    view :by_name
+  end
 end
 
 class Dog < Animal; end
@@ -67,19 +71,24 @@ describe "Subclassing a Model" do
   end
 
   it "should have a design doc slug based on the subclass name" do
-    OnlineCourse.design_doc_slug.should =~ /^OnlineCourse/
+    OnlineCourse.design_doc['_id'].should =~ /OnlineCourse$/
   end
 
   it "should not add views to the parent's design_doc" do
     Course.design_doc['views'].keys.should_not include('by_url')
   end
 
-  it "should not add the parent's views to its design doc" do
-    OnlineCourse.design_doc['views'].keys.should_not include('by_title')
+  it "should add the parent's views to its design doc" do
+    OnlineCourse.design_doc['views'].keys.should include('by_title')
+  end
+
+  it "should add the parent's views but alter the model names in map function" do
+    OnlineCourse.design_doc['views']['by_title']['map'].should =~ /doc\['#{OnlineCourse.model_type_key}'\] == 'OnlineCourse'/
   end
 
   it "should have an all view with a guard clause for model == subclass name in the map function" do
     OnlineCourse.design_doc['views']['all']['map'].should =~ /if \(doc\['#{OnlineCourse.model_type_key}'\] == 'OnlineCourse'\)/
   end
+
 end
 

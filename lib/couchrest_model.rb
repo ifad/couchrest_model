@@ -36,21 +36,17 @@ require "couchrest/model/casted_hash"
 require "couchrest/model/validations"
 require "couchrest/model/callbacks"
 require "couchrest/model/document_queries"
-require "couchrest/model/views"
-require "couchrest/model/design_doc"
 require "couchrest/model/extended_attachments"
-require "couchrest/model/class_proxy"
 require "couchrest/model/proxyable"
-require "couchrest/model/collection"
 require "couchrest/model/associations"
 require "couchrest/model/configuration"
 require "couchrest/model/connection"
 require "couchrest/model/designs"
+require "couchrest/model/designs/design"
 require "couchrest/model/designs/view"
 require "couchrest/model/search"
 
 # Monkey patches applied to couchrest
-require "couchrest/model/support/couchrest_design"
 require "couchrest/model/support/couchrest_database"
 
 # Core Extensions
@@ -60,6 +56,9 @@ require "couchrest/model/core_extensions/time_parsing"
 # Base libraries
 require "couchrest/model/embeddable"
 require "couchrest/model/base"
+
+# Design Migration support
+require "couchrest/model/migrate.rb"
 
 # Add rails support *after* everything has loaded
 if defined?(Rails)

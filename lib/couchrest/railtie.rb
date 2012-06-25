@@ -19,9 +19,12 @@ module CouchRest
       end
     end
 
-    # Lucene rake tasks
+    config.before_configuration do
+      config.couchrest_model = CouchRest::Model::Base
+    end
+
     rake_tasks do
-      load 'couchrest/model/tasks/migrate.rake'
+      Dir[File.join(File.dirname(__FILE__),'../tasks/*.rake')].each { |f| load f }
     end
   end
 end

@@ -14,20 +14,22 @@ module CouchRest
       class View
         include Enumerable
 
-        attr_accessor :owner, :model, :name, :query, :result
+        attr_accessor :owner, :model, :design_doc, :name, :query, :result
 
         # Initialize a new View object. This method should not be called from
         # outside CouchRest Model.
-        def initialize(parent, new_query = {}, name = nil)
+        def initialize(design_doc, parent, new_query = {}, name = nil)
+          self.design_doc = design_doc
+          proxy = new_query.delete(:proxy)
           if parent.is_a?(Class) && parent < CouchRest::Model::Base
             raise "Name must be provided for view to be initialized" if name.nil?
-            self.model    = parent
+            self.model    = (proxy || parent)
             self.owner    = parent
             self.name     = name.to_s
             # Default options:
             self.query    = { }
           elsif parent.is_a?(self.class)
-            self.model    = (new_query.delete(:proxy) || parent.model)
+            self.model    = (proxy || parent.model)
             self.owner    = parent.owner
             self.name     = parent.name
             self.query    = parent.query.dup
@@ -271,7 +273,7 @@ module CouchRest
         end
 
         # Use the reduce function on the view. If none is available this method
-        # will fail. 
+        # will fail.
         def reduce
           raise "Cannot reduce a view without a reduce method" unless can_reduce?
           update_query(:reduce => true, :include_docs => nil)
@@ -301,6 +303,17 @@ module CouchRest
 
         ### Special View Filter Methods
 
+        # Allow the results of a query to be provided "stale". Setting to 'ok'
+        # will disable all view updates for the query.
+        # When 'update_after' is provided the index will be update after the 
+        # result has been returned.
+        def stale(value)
+          unless (['ok', 'update_after'].include?(value.to_s))
+            raise "View#stale can only be set with 'ok' or 'update_after'."
+          end
+          update_query(:stale => value.to_s)
+        end
+
         # Specify the database the view should use. If not defined,
         # an attempt will be made to load its value from the model.
         def database(value)
@@ -309,8 +322,8 @@ module CouchRest
 
         # Set the view's proxy that will be used instead of the model
         # for any future searches. As soon as this enters the
-        # new object's initializer it will be removed and replace
-        # the model object.
+        # new view's initializer it will be removed and set as the model
+        # object.
         #
         # See the Proxyable mixin for more details.
         #
@@ -380,11 +393,7 @@ module CouchRest
         end
 
         def update_query(new_query = {})
-          self.class.new(self, new_query)
-        end
-
-        def design_doc
-          model.design_doc
+          self.class.new(design_doc, self, new_query)
         end
 
         def can_reduce?
@@ -402,27 +411,33 @@ module CouchRest
           # Remove the reduce value if its not needed to prevent CouchDB errors
           query.delete(:reduce) unless can_reduce?
 
-          model.save_design_doc(use_database)
+          design_doc.sync(use_database)
 
-          self.result = model.design_doc.view_on(use_database, name, query.reject{|k,v| v.nil?})
+          self.result = design_doc.view_on(use_database, name, query.reject{|k,v| v.nil?})
         end
 
         # Class Methods
         class << self
-          # Simplified view creation. A new view will be added to the 
-          # provided model's design document using the name and options.
+
+          def define_and_create(design_doc, name, opts = {})
+            define(design_doc, name, opts)
+            create_model_methods(design_doc, name, opts)
+          end
+
+          # Simplified view definition. A new view will be added to the 
+          # provided design document using the name and options.
           #
           # If the view name starts with "by_" and +:by+ is not provided in 
           # the options, the new view's map method will be interpreted and
           # generated automatically. For example:
           #
-          #   View.create(Meeting, "by_date_and_name")
+          #   View.define(Meeting, design, "by_date_and_name")
           #
           # Will create a view that searches by the date and name properties. 
           # Explicity setting the attributes to use is possible using the 
           # +:by+ option. For example:
           #
-          #   View.create(Meeting, "by_date_and_name", :by => [:date, :firstname, :lastname])
+          #   View.define(Meeting, design, "by_date_and_name", :by => [:date, :firstname, :lastname])
           #
           # The view name is the same, but three keys would be used in the
           # subsecuent index.
@@ -437,13 +452,22 @@ module CouchRest
           # like to enable this, set the <tt>:allow_blank</tt> option to false. The default
           # is true, empty strings are permited in the indexes.
           #
-          def create(model, name, opts = {})
+          def define(design_doc, name, opts = {})
+            model = design_doc.model
 
-            unless opts[:map]
+            # Is this an all view?
+            if name.to_s == 'all'
+              opts[:map] = <<-EOF
+                function(doc) {
+                  if (doc['#{model.model_type_key}'] == '#{model.to_s}') {
+                    emit(doc._id, null);
+                  }
+                }
+              EOF
+            elsif !opts[:map]
               if opts[:by].nil? && name.to_s =~ /^by_(.+)/
                 opts[:by] = $1.split(/_and_/)
               end
-
               raise "View cannot be created without recognised name, :map or :by options" if opts[:by].nil?
 
               opts[:allow_blank] = opts[:allow_blank].nil? ? true : opts[:allow_blank]
@@ -461,18 +485,33 @@ module CouchRest
                   }
                 }
               EOF
-              opts[:reduce] = <<-EOF
-                function(key, values, rereduce) {
-                  return sum(values);
-                }
-              EOF
+              if opts[:reduce].nil?
+                opts[:reduce] = <<-EOF
+                  function(key, values, rereduce) {
+                    return sum(values);
+                  }
+                EOF
+              end
             end
 
-            model.design_doc['views'] ||= {}
-            view = model.design_doc['views'][name.to_s] = { }
+            design_doc['views'] ||= {}
+            view = design_doc['views'][name.to_s] = { }
             view['map'] = opts[:map]
             view['reduce'] = opts[:reduce] if opts[:reduce]
             view
+          end
+
+
+          def create_model_methods(design_doc, name, opts = {})
+            method = design_doc.method_name
+            design_doc.model.instance_eval <<-EOS, __FILE__, __LINE__ + 1
+              def #{name}(opts = {})
+                #{method}.view('#{name}', opts)
+              end
+              def find_#{name}(*key)
+                #{name}.key(*key).first()
+              end
+            EOS
           end
 
         end

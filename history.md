@@ -1,8 +1,19 @@
 # CouchRest Model Change History
 
-## 1.1.3
-	
-	* CouchRest::Model::Base.respond_to_missing? and respond_to? (Kim Burgestrand)
+## 2.0.0.beta - 2012-06-14
+
+  * Added design doc migration support, including for proxied models
+  * Rake tasks available for migrations
+  * Rails config option now available: `config.couchrest_model.auto_update_design_docs = false`
+  * Skipping 1.2 version due to design doc API changes
+
+## 1.2.0.beta - 2012-06-08
+
+  * Completely refactored Design Document handling.
+  * Removed old `view` and `view_by` methods.
+  * CouchRest::Model::Base.respond_to_missing? and respond_to? (Kim Burgestrand) (later removed)
+  * Time#as_json now insists on using xmlschema with 3 fraction digits by default.
+  * Added time_fraction_digits configuration object
 
 ## 1.1.2 - 2011-07-23
 
