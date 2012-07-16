@@ -60,7 +60,8 @@ require "couchrest/model/embeddable"
 require "couchrest/model/base"
 
 # Design Migration support
-require "couchrest/model/utils/migrate.rb"
+require "couchrest/model/utils/migrate"
+require "couchrest/model/utils/migrate/custom"
 
 # Add rails support *after* everything has loaded
 if defined?(Rails)

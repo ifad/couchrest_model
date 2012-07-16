@@ -1,9 +1,9 @@
 module CouchRest
   module Model
-    module Migrations
+    module Utils::Migrate::Custom
       extend self
 
-      def migrate!
+      def run!
         sources.each do |file|
           migrate read_source(file)
         end
@@ -18,7 +18,7 @@ module CouchRest
           gsub(/\n\s*/, '').      # Our JS multiline string implementation :-p
           gsub(/\/\*.*?\*\//, '') # And strip multiline comments as well.
 
-        Design.new(JSON.parse(source)).tap do |document|
+        CouchRest::Design.new(JSON.parse(source)).tap do |document|
           document.database = Base.database
 
           document['_id']      ||= "_design/#{File.basename(file, '.js')}"
@@ -59,6 +59,7 @@ module CouchRest
           puts "   up to date (#{current['version']})"
         end
       end
+
     end
   end
 end
