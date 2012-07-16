@@ -1,9 +1,9 @@
 module CouchRest
   module Model
-    module Migrations
+    module Migrate::Custom
       extend self
 
-      def migrate!
+      def run!
         sources.each do |file|
           migrate read_source(file)
         end
@@ -59,6 +59,7 @@ module CouchRest
           puts "   up to date (#{current['version']})"
         end
       end
+
     end
   end
 end
