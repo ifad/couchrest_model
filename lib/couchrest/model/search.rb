@@ -28,13 +28,17 @@ module CouchRest
           super(design, model, query, "#{model.name} \"#@lucene_query\" Search")
         end
 
+        def lucene_query
+          @lucene_query.dup if @lucene_query
+        end
+
         def total_count
           result!['total_rows']
         end
 
         protected
 
-        def lucene_query
+        def typed_lucene_query
           klass = "#{model.model_type_key}:\"#{model.name}\""
           query = @lucene_query.blank? ? nil : "(#@lucene_query)"
 
@@ -49,7 +53,7 @@ module CouchRest
           self.result ||= begin
             raise "No database defined for #{model.name!}" if use_database.nil?
 
-            use_database.search(design_doc, query.merge(:q => lucene_query))
+            use_database.search(design_doc, query.merge(:q => typed_lucene_query))
           end
         end
 
@@ -59,6 +63,31 @@ module CouchRest
 
         def can_reduce?
           false
+        end
+
+        private
+
+        # For merging multiple queries
+        def method_missing(meth, *args, &block)
+          if model.respond_to?(meth)
+            merge(model.public_send(meth, *args, &block))
+          else
+            super
+          end
+        end
+
+        def merge(view)
+          unless view.is_a?(self.class)
+            raise "Cannot merge #{self.class} and #{query.class}"
+          end
+
+          query = [self.lucene_query, view.lucene_query].compact.
+            map {|q| "(#{q})" }.join(' AND ').presence
+
+          options = self.query.update(view.query)
+
+
+          self.class.new(self, query, options)
         end
       end
 
