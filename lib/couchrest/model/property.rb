@@ -4,7 +4,7 @@ module CouchRest::Model
 
     include ::CouchRest::Model::Typecast
 
-    attr_reader :name, :type, :type_class, :read_only, :alias, :default, :casted, :init_method, :options
+    attr_reader :name, :type, :type_class, :read_only, :alias, :default, :casted, :init_method, :options, :allow_blank
 
     # Attribute to define.
     # All Properties are assumed casted unless the type is nil.
@@ -18,6 +18,10 @@ module CouchRest::Model
 
     def to_s
       name
+    end
+    
+    def to_sym
+      @_sym_name ||= name.to_sym
     end
 
     # Cast the provided value using the properties details.
@@ -33,6 +37,7 @@ module CouchRest::Model
           raise "Expecting an array or keyed hash for property #{parent.class.name}##{self.name}"
         end
         arr = value.collect { |data| cast_value(parent, data) }
+        arr.reject!{ |data| data.nil? } unless allow_blank
         # allow casted_by calls to be passed up chain by wrapping in CastedArray
         CastedArray.new(arr, self, parent)
       elsif (type == Object || type == Hash) && (value.is_a?(Hash))
@@ -45,8 +50,12 @@ module CouchRest::Model
 
     # Cast an individual value
     def cast_value(parent, value)
-      value = typecast_value(value, self)
-      associate_casted_value_to_parent(parent, value)
+      if !allow_blank && value.to_s.empty?
+        nil
+      else
+        value = typecast_value(parent, self, value)
+        associate_casted_value_to_parent(parent, value)
+      end
     end
 
     def default_value
@@ -64,6 +73,7 @@ module CouchRest::Model
     # a normal call to the class.
     def build(*args)
       raise StandardError, "Cannot build property without a class" if @type_class.nil?
+
       if @init_method.is_a?(Proc)
         @init_method.call(*args)
       else
@@ -102,13 +112,13 @@ module CouchRest::Model
       end
 
       def parse_options(options)
-        @validation_format  = options.delete(:format)     if options[:format]
-        @read_only          = options.delete(:read_only)  if options[:read_only]
-        @alias              = options.delete(:alias)      if options[:alias]
-        @default            = options.delete(:default)    unless options[:default].nil?
-        @init_method        = options[:init_method] ? options.delete(:init_method) : 'new'
+        @validation_format  = options.delete(:format)      if options[:format]
+        @read_only          = options.delete(:read_only)   if options[:read_only]
+        @alias              = options.delete(:alias)       if options[:alias]
+        @default            = options.delete(:default)     unless options[:default].nil?
+        @init_method        = options.delete(:init_method) || 'new'
+        @allow_blank        = options[:allow_blank].nil? ? true : options.delete(:allow_blank)
         @options            = options
       end
-
   end
 end

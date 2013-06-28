@@ -328,7 +328,6 @@ describe "properties of array of casted models" do
     @course.questions.last.class.should eql(Question)
   end
 
-
   it "should raise an error if attempting to set single value for array type" do
     lambda {
       @course.questions = Question.new(:q => 'test1')
@@ -393,6 +392,12 @@ describe "Property Class" do
     property.to_s.should eql('test')
   end
 
+  it "should provide name as a symbol" do 
+    property = CouchRest::Model::Property.new(:test, String)
+    property.name.to_sym.should eql(:test)
+    property.to_sym.should eql(:test)
+  end
+
   it "should provide class from type" do
     property = CouchRest::Model::Property.new(:test, String)
     property.type_class.should eql(String)
@@ -426,6 +431,16 @@ describe "Property Class" do
     property.init_method.should eql('new')
     property = CouchRest::Model::Property.new(:test, Time, :init_method => 'parse')
     property.init_method.should eql('parse')
+  end
+
+  it "should set the allow_blank option to true by default" do
+    property = CouchRest::Model::Property.new(:test, String)
+    property.allow_blank.should be_true
+  end
+
+  it "should allow setting of the allow_blank option to false" do
+    property = CouchRest::Model::Property.new(:test, String, :allow_blank => false)
+    property.allow_blank.should be_false
   end
 
   describe "#build" do
@@ -464,6 +479,22 @@ describe "Property Class" do
       property = CouchRest::Model::Property.new(:test, [Date])
       parent = mock("FooObject")
       property.cast(parent, ["2010-06-01", "2010-06-02"]).should eql([Date.new(2010, 6, 1), Date.new(2010, 6, 2)])
+    end
+
+    context "when allow_blank is false" do
+      let :parent do
+        mock("FooObject")
+      end
+
+      it "should convert blank to nil" do
+        property = CouchRest::Model::Property.new(:test, String, :allow_blank => false)
+        property.cast(parent, "").should be_nil
+      end
+
+      it "should remove blank array entries" do
+        property = CouchRest::Model::Property.new(:test, [String], :allow_blank => false)
+        property.cast(parent, ["", "foo"]).should eql(["foo"])
+      end
     end
 
     it "should set a CastedArray on array of Objects" do
