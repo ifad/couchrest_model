@@ -3,6 +3,10 @@
 CouchRest Models adds additional functionality to the standard CouchRest Document class such as
 setting properties, callbacks, typecasting, and validations.
 
+## Purpose of this fork
+
+This fork adds Couchdb-Lucene full-text-search integration. Have a look at the commit logs of the IFAD branch for now, and ask for documentation if you need.
+
 ## Documentation
 
 Please visit the documentation project at [http://www.couchrest.info](http://www.couchrest.info). You're [contributions](https://github.com/couchrest/couchrest.github.com) to the documentation would be greatly appreciated!
