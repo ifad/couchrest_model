@@ -56,6 +56,10 @@ describe CouchRest::Model::Connection do
     end
 
     describe ".database" do
+      before do
+        @class.connection.update(:username => COUCHUSER, :password => COUCHPASS)
+      end
+
       it "should respond to" do
         @class.should respond_to(:database)
       end
@@ -85,28 +89,30 @@ describe CouchRest::Model::Connection do
             :port => '5985',
             :prefix => 'sample',
             :suffix => 'test',
-            :username => 'foo',
-            :password => 'bar'
+            :username => COUCHUSER,
+            :password => COUCHPASS
           }
-        @class.server.uri.should eql("https://foo:bar@127.0.0.1:5985")
+        @class.server.uri.should eql("https://#{COUCHUSER}:#{COUCHPASS}@127.0.0.1:5985")
       end
 
     end
 
     describe ".prepare_database" do
 
+      let(:connection) { @class.connection.update(:username => COUCHUSER, :password => COUCHPASS) }
+
       it "should respond to" do
         @class.should respond_to(:prepare_database)
       end
 
       it "should join the database name correctly" do
-        @class.connection[:suffix] = 'db'
+        connection[:suffix] = 'db'
         db = @class.prepare_database('test')
         db.name.should eql('couchrest_test_db')
       end
 
       it "should ignore nil values in database name" do
-        @class.connection[:suffix] = nil
+        connection[:suffix] = nil
         db = @class.prepare_database('test')
         db.name.should eql('couchrest_test')
       end

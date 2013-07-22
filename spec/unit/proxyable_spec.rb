@@ -20,6 +20,7 @@ describe CouchRest::Model::Proxyable do
         def slug; 'proxy'; end
       end
       @obj = @class.new
+      @class.connection.update(:username => COUCHUSER, :password => COUCHPASS)
     end
 
     it "should respond to method" do
