@@ -117,6 +117,8 @@ module CouchRest
           if can_reduce?
             row = reduce.skip(0).limit(1).rows.first
             row.nil? ? 0 : row.value
+          elsif query.key?(:startkey) || query.key?(:endkey)
+            update_query(:include_docs => false).rows.size
           else
             limit(0).total_rows
           end
