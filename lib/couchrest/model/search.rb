@@ -23,6 +23,16 @@ module CouchRest
 
           query.update(:include_docs => true)
 
+          if query[:sort].present?
+            direction = query.delete(:descending) ? '\\' : '/'
+
+            if query[:sort][0].in?(%w(\\ /))
+              query[:sort][0] = direction
+            else
+              query[:sort] = direction << query[:sort]
+            end
+          end
+
           design = "_design/lucene/#@lucene_index" # TODO Use a DesignDoc instance
 
           super(design, model, query, "#{model.name} \"#@lucene_query\" Search")
