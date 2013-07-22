@@ -23,13 +23,17 @@ module CouchRest
 
           query.update(:include_docs => true)
 
-          if query[:sort].present?
+          sort = Array.wrap(query[:sort])
+          if sort.present?
+            has_direction = query.key?(:descending)
             direction = query.delete(:descending) ? '\\' : '/'
 
-            if query[:sort][0].in?(%w(\\ /))
-              query[:sort][0] = direction
-            else
-              query[:sort] = direction << query[:sort]
+            query[:sort] = sort.map do |field|
+              if field[0].in?(%w(\\ /))
+                has_direction ? field.tap { field[0] = direction } : field
+              else
+                direction + field
+              end
             end
           end
 
@@ -70,7 +74,13 @@ module CouchRest
           self.result ||= begin
             raise "No database defined for #{model.name!}" if use_database.nil?
 
-            use_database.search(design_doc, query.merge(:q => typed_lucene_query))
+            search = query.except(:q, :sort).merge(:q => typed_lucene_query)
+
+            if query[:sort].present?
+              search[:sort] = query[:sort].join(',')
+            end
+
+            use_database.search(design_doc, search)
           end
         end
 
@@ -101,10 +111,13 @@ module CouchRest
           query = [self.lucene_query, view.lucene_query].compact.
             map {|q| "(#{q})" }.join(' AND ').presence
 
-          options = self.query.update(view.query)
+          sort = (self.query[:sort] || []).concat(view.query[:sort] || [])
 
+          options = self.query.except(:sort).update(view.query.except(:sort))
 
-          self.class.new(self, query, options)
+          self.class.new(self, query, options).tap do |result|
+            result.query[:sort] = sort
+          end
         end
       end
 
