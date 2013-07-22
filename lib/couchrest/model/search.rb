@@ -32,9 +32,11 @@ module CouchRest
           @lucene_query.dup if @lucene_query
         end
 
-        def total_count
+        def count
+          query.update(:include_docs => false)
           result!['total_rows']
         end
+        alias :total_count :count
 
         protected
 
