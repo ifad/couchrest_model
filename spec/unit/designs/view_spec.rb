@@ -287,6 +287,15 @@ describe "Design View" do
           @obj.count.should eql(0)
         end
 
+        it "should perform rows request without include_docs if a startkey/endkey is set" do
+          view = mock("SubView")
+          @obj.should_receive(:can_reduce?).and_return(false)
+          @obj.should_receive(:query).twice.and_return(:startkey => 'foo', :endkey => 'bar')
+          @obj.should_receive(:update_query).with(:include_docs => false).and_return(view)
+          view.should_receive(:rows).and_return(['foo', 'bar'])
+          @obj.count.should eql(2)
+        end
+
         it "should perform limit request for total_rows" do
           view = mock("SubView")
           @obj.should_receive(:limit).with(0).and_return(view)
