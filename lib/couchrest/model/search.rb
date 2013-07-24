@@ -22,8 +22,6 @@ module CouchRest
           @lucene_query = lucene_query
           @lucene_index = query.delete(:index) || 'search'
 
-          query.update(:include_docs => true)
-
           sort = Array.wrap(query[:sort])
           if sort.present?
             has_direction = query.key?(:descending)
@@ -48,8 +46,15 @@ module CouchRest
         end
 
         def count
-          query.update(:include_docs => false, :include_fields => false, :limit => 1)
-          result!['total_rows']
+          @count ||= begin
+            previous = self.query.dup
+            self.query.update(:include_fields => false, :limit => 1)
+
+            result!['total_rows'].tap do
+              self.query = previous
+              self.result = nil
+            end
+          end
         end
         alias :total_count :count
         alias :size :count
@@ -79,6 +84,10 @@ module CouchRest
 
             if query[:sort].present?
               search[:sort] = query[:sort].join(',')
+            end
+
+            unless query.key?(:include_docs)
+              search[:include_docs] = true
             end
 
             use_database.search(design_doc, search)
