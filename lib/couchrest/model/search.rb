@@ -47,7 +47,7 @@ module CouchRest
         end
 
         def count
-          query.update(:include_docs => false)
+          query.update(:include_docs => false, :include_fields => false, :limit => 1)
           result!['total_rows']
         end
         alias :total_count :count
