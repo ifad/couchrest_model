@@ -6,6 +6,7 @@ module CouchRest
       module ClassMethods
 
         def search(query, options = {})
+          options[:limit] ||= self.count
           View.new(self, query, options)
         end
 
