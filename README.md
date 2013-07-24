@@ -1,11 +1,18 @@
+## Purpose of this fork
+
+This fork adds full Couchdb-Lucene full-text-search integration. It requires
+our [CouchRest fork](https://github.com/ifad/couchrest) and our version of
+[CouchDB-Lucene](https://github.com/ifad/couchdb-lucene).
+
+It adds search scopes, queries via POST, updated Lucene (3.6.2), and the full
+set of OOXML schemas, to be able to parse all kinds of Microsoft document types.
+
+Have a look at the commit logs of the IFAD branch for now, and ask for documentation if you need.
+
 # CouchRest Model: CouchDB, close to shiny metal with rounded edges [![Build Status](https://travis-ci.org/couchrest/couchrest_model.png)](https://travis-ci.org/couchrest/couchrest_model)
 
 CouchRest Models adds additional functionality to the standard CouchRest Document class such as
 setting properties, callbacks, typecasting, and validations.
-
-## Purpose of this fork
-
-This fork adds Couchdb-Lucene full-text-search integration. Have a look at the commit logs of the IFAD branch for now, and ask for documentation if you need.
 
 ## Documentation
 

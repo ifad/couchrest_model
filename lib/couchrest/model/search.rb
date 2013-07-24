@@ -37,7 +37,7 @@ module CouchRest
             end
           end
 
-          design = "_design/lucene/#@lucene_index" # TODO Use a DesignDoc instance
+          design = "lucene/#@lucene_index" # TODO Use a DesignDoc instance
 
           super(design, model, query, "#{model.name} \"#@lucene_query\" Search")
         end
