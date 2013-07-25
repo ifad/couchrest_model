@@ -14,7 +14,7 @@ module CouchRest
           #   use TotalHitCountCollector if you just need the total hit count
           #
           # that should be fixed properly in C-L itself. FIXME!
-          options.delete(:limit) = nil if options[:limit] == 0
+          options.delete(:limit) if options[:limit] == 0
 
           View.new(self, query, options)
         end
