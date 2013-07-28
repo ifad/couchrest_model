@@ -31,23 +31,11 @@ module CouchRest
           @lucene_query = lucene_query
           @lucene_index = query.delete(:index) || 'search'
 
-          sort = Array.wrap(query[:sort])
-          if sort.present?
-            has_direction = query.key?(:descending)
-            direction = query.delete(:descending) ? '\\' : '/'
-
-            query[:sort] = sort.map do |field|
-              if field[0].in?(%w(\\ /))
-                has_direction ? field.tap { field[0] = direction } : field
-              else
-                direction + field
-              end
-            end
-          end
-
           design = "lucene/#@lucene_index" # TODO Use a DesignDoc instance
 
           super(design, model, query, "#{model.name} \"#@lucene_query\" Search")
+
+          setup_sorting
         end
 
         def lucene_query
@@ -136,6 +124,23 @@ module CouchRest
 
           self.class.new(self, query, options).tap do |result|
             result.query[:sort] = sort
+            result.send(:setup_sorting) # FIXME this sucks, and should be refactored
+          end
+        end
+
+        def setup_sorting
+          sort = Array.wrap(query[:sort])
+          if sort.present?
+            has_direction = query.key?(:descending)
+            direction = query.delete(:descending) ? '\\' : '/'
+
+            query[:sort] = sort.map do |field|
+              if field[0].in?(%w(\\ /))
+                has_direction ? field.tap { field[0] = direction } : field
+              else
+                direction + field
+              end
+            end
           end
         end
       end
