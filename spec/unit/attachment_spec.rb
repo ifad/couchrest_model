@@ -153,23 +153,61 @@ describe "Model attachments" do
   end
 
   describe "#attachments" do
-    before(:each) do
-      @obj = Basic.new
-      @file = File.open(FIXTURE_PATH + '/attachments/test.html')
-      @attachment_name = 'my_attachment'
-      @obj.create_attachment(:file => @file, :name => @attachment_name)
-      @obj.save.should be_true
-    end
-  
     it 'should return an empty Hash when document does not have any attachment' do
       new_obj = Basic.new
       new_obj.save.should be_true
       new_obj.attachments.should == {}
     end
-  
-    it 'should return a Hash with all attachments' do
-      @file.rewind
-      @obj.attachments.should == { @attachment_name =>{ "data" => "PCFET0NUWVBFIGh0bWw+CjxodG1sPgogIDxoZWFkPgogICAgPHRpdGxlPlRlc3Q8L3RpdGxlPgogIDwvaGVhZD4KICA8Ym9keT4KICAgIDxwPgogICAgICBUZXN0CiAgICA8L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==", "content_type" => "text/html"}}
+
+    it 'should not re-encode already saved attachments' do
+      i = Basic.create(:title => "A buggy model")
+
+      i.create_attachment(:name => "ch1", :file => StringIO.new("First Chapter"), :content_type => "text/plain")
+      i.save!
+      i.read_attachment("ch1").should == "First Chapter"
+
+      i.create_attachment(:name => "ch2", :file => StringIO.new("Second Chapter"), :content_type => "text/plain")
+      i.save!
+      i.read_attachment("ch1").should == "First Chapter"
+      i.read_attachment("ch2").should == "Second Chapter"
+
+      i.create_attachment(:name => "ch3", :file => StringIO.new("Third Chapter"), :content_type => "text/plain")
+      i.save!
+      i.read_attachment("ch1").should == "First Chapter"
+      i.read_attachment("ch2").should == "Second Chapter"
+      i.read_attachment("ch3").should == "Third Chapter"
+    end
+
+    context 'on an object' do
+      before(:each) do
+        @obj = Basic.new
+        @file = File.open(FIXTURE_PATH + '/attachments/test.html')
+        @attachment_name = 'my_attachment'
+        @obj.create_attachment(:file => @file, :name => @attachment_name)
+        @file.rewind
+        @obj.save.should be_true
+      end
+
+      context 'newly saved' do
+        it 'should return a Hash with all attachments without data' do
+          @obj.attachments.should == { @attachment_name =>{ "stub" => true, "content_type" => "text/html"} }
+        end
+      end
+
+      context 'already persisted' do
+        before(:each) do
+          @obj = Basic.find(@obj.id)
+        end
+
+        it 'should return an Hash without data and with a digest' do
+          attach = @obj.attachments.fetch(@attachment_name)
+
+          attach['stub'].should == true
+          attach['length'].should == 121
+          attach['content_type'].should == 'text/html'
+          attach['digest'].should == 'md5-eJGYWSlZJkRAupndVYf+dg=='
+        end
+      end
     end
   
   end

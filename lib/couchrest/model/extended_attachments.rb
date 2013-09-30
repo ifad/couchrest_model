@@ -58,7 +58,26 @@ module CouchRest
         return unless has_attachment?(attachment_name)
         "#{database.uri}/#{self.id}/#{attachment_name}"
       end
-      
+
+
+      # Remove the 'data' key from attachments hash on save, or on subsequent
+      # saves it'll be saved again and then re-encoded.
+      #
+      def save(*)
+        remove_attachment_data = changed_attributes.key?('_attachments')
+
+        super.tap do
+          if remove_attachment_data
+            self.attachments.each do |_,attach|
+              if attach.key?('data')
+                attach.delete('data')
+                attach['stub'] = true
+              end
+            end
+          end
+        end
+      end
+
       private
       
         def get_mime_type(path)
