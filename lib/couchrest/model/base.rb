@@ -88,6 +88,11 @@ module CouchRest
       end
       alias :eql? :==
 
+      # Fixes https://github.com/couchrest/couchrest_model/issues/128
+      def hash
+        id.hash
+      end
+
     end
   end
 end
