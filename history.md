@@ -18,6 +18,14 @@
   * Support for Rails 4.0.
   * Removing support for <= Ruby 1.9.2.
   * Fixing model translation support.
+  * Fixing `belongs_to` setting foreign key cache issue.
+  * Support typecasting `Symbol`
+  * Added `:array` option to properties
+  * Typecasting Dates, Times, and Booleans, with invalid values returns nil
+  
+  * API Breaking Changes
+    * Properties with blocks are now singular unless the `array: true` option is passed.
+  
 
 ## 1.2.0.beta - 2012-06-08
 

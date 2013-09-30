@@ -4,17 +4,17 @@ module CouchRest
 
       def typecast_value(parent, property, value)
         return nil if value.nil?
-        klass = property.type_class
-        if value.instance_of?(klass) || klass == Object
-          if klass == Time && !value.utc?
+        type = property.type
+        if value.instance_of?(type) || type == Object
+          if type == Time && !value.utc?
             value.utc # Ensure Time is always in UTC
           else
             value
           end
-        elsif klass.respond_to?(:couchrest_typecast)
-          klass.couchrest_typecast(parent, property, value)
-        elsif [String, TrueClass, Integer, Float, BigDecimal, DateTime, Time, Date, Class].include?(klass)
-          send('typecast_to_'+klass.to_s.downcase, value)
+        elsif type.respond_to?(:couchrest_typecast)
+          type.couchrest_typecast(parent, property, value)
+        elsif [String, Symbol, TrueClass, Integer, Float, BigDecimal, DateTime, Time, Date, Class].include?(type)
+          send('typecast_to_'+type.to_s.downcase, value)
         else
           property.build(value)
         end
@@ -65,6 +65,10 @@ module CouchRest
           value.to_s
         end
 
+        def typecast_to_symbol(value)
+          value.to_sym
+        end
+
         # Typecast a value to a true or false
         def typecast_to_trueclass(value)
           if value.kind_of?(Integer)
@@ -74,7 +78,7 @@ module CouchRest
             return true  if %w[ true  1 t ].include?(value.to_s.downcase)
             return false if %w[ false 0 f ].include?(value.to_s.downcase)
           end
-          value
+          nil
         end
 
         # Typecasts an arbitrary value to a DateTime.
@@ -87,7 +91,7 @@ module CouchRest
             DateTime.parse(value.to_s)
           end
         rescue ArgumentError
-          value
+          nil
         end
 
         # Typecasts an arbitrary value to a Date
@@ -104,7 +108,7 @@ module CouchRest
             Date.parse(value)
           end
         rescue ArgumentError
-          value
+          nil
         end
 
         # Typecasts an arbitrary value to a Time
@@ -119,9 +123,9 @@ module CouchRest
             Time.parse_iso8601(value.to_s)
           end
         rescue ArgumentError
-          value
+          nil
         rescue TypeError
-          value
+          nil
         end
 
         # Creates a DateTime instance from a Hash with keys :year, :month, :day,
@@ -154,7 +158,7 @@ module CouchRest
         def typecast_to_class(value)
           value.to_s.constantize
         rescue NameError
-          value
+          nil
         end
 
     end
