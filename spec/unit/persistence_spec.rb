@@ -161,7 +161,51 @@ describe CouchRest::Model::Persistence do
 
     end
   end
-  
+
+  describe "concurrently saving a model" do
+
+    before(:each) do
+      obj = Card.new(:first_name => "Richard", :last_name => "Feynman")
+      obj.save.should be_true
+
+      @inst1 = Card.find(obj.id)
+      @inst2 = Card.find(obj.id)
+    end
+
+    it "using save! raises Conflict" do
+      @inst1.first_name = 'Foo'
+      lambda { @inst1.save! }.should_not raise_error
+
+      @inst2.first_name = 'Bar'
+      lambda { @inst2.save! }.should raise_error(RestClient::Conflict)
+
+      @inst1.reload.first_name == 'Foo'
+      @inst2.reload.first_name == 'Bar'
+    end
+
+    context "using retry_save reloads and retries" do
+      it "overwrites the same property" do
+        @inst1.retry_save { @inst1.first_name = 'Foobar' }.should be_true
+        @inst2.retry_save { @inst2.first_name = 'Barbaz' }.should be_true
+
+        @inst1.reload.first_name.should == 'Barbaz'
+        @inst2.reload.first_name.should == 'Barbaz'
+      end
+
+      it "merges different properties" do
+        @inst1.retry_save { @inst1.first_name = 'Stephen' }.should be_true
+        @inst2.retry_save { @inst2.last_name  = 'Hawking' }.should be_true
+
+        @inst1.reload.first_name.should == 'Stephen'
+        @inst1.reload.last_name.should  == 'Hawking'
+
+        @inst2.reload.first_name.should == 'Stephen'
+        @inst2.reload.last_name.should  == 'Hawking'
+      end
+    end
+
+  end
+
   describe "saving a model with a unique_id configured" do
     before(:each) do
       @art = Article.new

@@ -54,6 +54,25 @@ module CouchRest
         true
       end
 
+      # Runs the given block and then calls +save!+. If it catches a
+      # RestClient::Conflict, then it calls +reload+ and retries. It
+      # retries at most <tt>max_tries</tt> times.
+      def retry_save(max_tries = 10, &block)
+        tries = 0
+
+        begin
+          block.call
+          save!
+        rescue RestClient::Conflict
+          if (tries += 1) < max_tries
+            reload
+            retry
+          else
+            raise
+          end
+        end
+      end
+
       # Deletes the document from the database. Runs the :destroy callbacks.
       def destroy
         run_callbacks :destroy do
