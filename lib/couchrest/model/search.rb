@@ -115,8 +115,16 @@ module CouchRest
             raise "Cannot merge #{self.class} with #{view.class}"
           end
 
-          query = [self.lucene_query, view.lucene_query].compact.
-            map {|q| "(#{q})" }.join(' AND ').presence
+          other = view.lucene_query.try(:dup)
+
+          glue = ' AND '
+          if other.try(:first) == '!'
+            other.slice! 0, 1
+            glue << 'NOT '
+          end
+
+          query = [self.lucene_query, other].compact.
+            map {|q| "(#{q})" }.join(glue).presence
 
           sort = (self.query[:sort] || []).concat(view.query[:sort] || [])
 
