@@ -6,16 +6,6 @@ module CouchRest
       module ClassMethods
 
         def search(query, options = {})
-          options[:limit] ||= self.count
-
-          # This works around the C-L error:
-          #
-          #   java.lang.IllegalArgumentException: numHits must be > 0; please
-          #   use TotalHitCountCollector if you just need the total hit count
-          #
-          # that should be fixed properly in C-L itself. FIXME!
-          options.delete(:limit) if options[:limit] == 0
-
           View.new(self, query, options)
         end
 
@@ -86,6 +76,16 @@ module CouchRest
             unless query.key?(:include_docs)
               search[:include_docs] = true
             end
+
+            search[:limit] ||= self.count
+
+            # This works around the C-L error:
+            #
+            #   java.lang.IllegalArgumentException: numHits must be > 0; please
+            #   use TotalHitCountCollector if you just need the total hit count
+            #
+            # that should be fixed properly in C-L itself. FIXME!
+            search.delete(:limit) if search[:limit] == 0
 
             use_database.search(design_doc, search)
           end
