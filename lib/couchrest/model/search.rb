@@ -112,7 +112,7 @@ module CouchRest
 
         def merge(view)
           unless view.is_a?(self.class)
-            raise "Cannot merge #{self.class} and #{query.class}"
+            raise "Cannot merge #{self.class} with #{view.class}"
           end
 
           query = [self.lucene_query, view.lucene_query].compact.
